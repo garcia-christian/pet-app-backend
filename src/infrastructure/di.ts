@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { makeConfig } from './config';
 import { makeLogger } from './logger';
 import { makeShortenedUrlsRepository } from './repositories/shortened-urls-repository';
+import { makeUsersRepository } from './repositories/users-repository';
 import { makeVisitsRepository } from './repositories/visits-repository';
 
 export async function makeDependencies() {
@@ -24,6 +25,7 @@ export async function makeDependencies() {
 
   const shortenedUrlsRepository = makeShortenedUrlsRepository(db);
   const visitsRepository = makeVisitsRepository(db);
+  const usersRepository = makeUsersRepository(db);
 
   return {
     config,
@@ -32,6 +34,7 @@ export async function makeDependencies() {
     repositories: {
       shortenedUrlsRepository,
       visitsRepository,
+      usersRepository,
     },
     dispose: async () => {
       await db.$disconnect();

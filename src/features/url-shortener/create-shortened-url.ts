@@ -54,8 +54,8 @@ export async function createShortenedUrl(
     const result = await repositories.shortenedUrlsRepository.create(shortenedUrl);
 
     if (result.ok) {
-      logger.info({ id: result.data.id }, 'Shortened URL created');
-      return { type: 'success', id: result.data.id };
+      logger.info({ id: shortenedUrl.id }, 'Shortened URL created');
+      return { type: 'success', id: shortenedUrl.id };
     }
 
     if (result.error === 'persistence_error') {

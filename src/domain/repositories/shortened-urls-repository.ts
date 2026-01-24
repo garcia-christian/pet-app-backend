@@ -1,8 +1,7 @@
 import type { ShortenedUrl } from '../entities';
-
-type CreateResult = { ok: true; data: ShortenedUrl } | { ok: false; error: 'duplicate_id' | 'persistence_error' };
+import type { ApiResponse } from '../types/api-response';
 
 export interface ShortenedUrlsRepository {
-  create(shortenedUrl: ShortenedUrl): Promise<CreateResult>;
+  create(shortenedUrl: ShortenedUrl): Promise<ApiResponse<ShortenedUrl>>;
   getById(id: string): Promise<ShortenedUrl | null>;
 }

@@ -3,6 +3,7 @@ import Helmet from '@fastify/helmet';
 import type { Dependencies } from '@infrastructure/di';
 import type { FastifyInstance } from 'fastify';
 import urlShortenerController from './features/url-shortener/url-shortener-controller';
+import userController from './features/users/user-controller';
 import dependencyInjectionPlugin from './plugins/dependency-injection';
 import errorHandlerPlugin from './plugins/error-handler';
 import healthPlugin from './plugins/health';
@@ -30,6 +31,7 @@ export async function app(fastify: FastifyInstance, dependencies: Dependencies) 
   await fastify.register(errorHandlerPlugin);
   await fastify.register(healthPlugin);
   await fastify.register(urlShortenerController);
+  await fastify.register(userController);
 
   return fastify;
 }

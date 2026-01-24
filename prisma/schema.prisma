@@ -28,3 +28,117 @@ model Visit {
   @@index([shortenedUrlId, visitedAt])
   @@map("visits")
 }
+
+// ==========================
+// ENUMS
+// ==========================
+
+enum HouseholdRole {
+  OWNER
+  MEMBER
+}
+
+enum PetType {
+  DOG
+  CAT
+  OTHER
+}
+
+enum TaskType {
+  FEED
+  WALK
+  CLEAN
+  OTHER
+}
+
+enum TaskScheduleType {
+  DAILY
+  ONCE
+}
+
+// ==========================
+// MODELS
+// ==========================
+
+model User {
+  id        String   @id @default(uuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  households      HouseholdMember[]
+  taskCompletions TaskCompletion[]
+
+  @@map("users")
+}
+
+model Household {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members HouseholdMember[]
+  pets    Pet[]
+  tasks   Task[]
+
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          String        @id @default(uuid())
+  householdId String
+  userId      String
+  role        HouseholdRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@map("household_members")
+}
+
+model Pet {
+  id          String   @id @default(uuid())
+  householdId String
+  name        String
+  type        PetType @default(OTHER)
+  createdAt  DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@map("pets")
+}
+
+model Task {
+  id           String            @id @default(uuid())
+  householdId  String
+  petId        String?
+  title        String
+  taskType     TaskType
+  scheduleType TaskScheduleType  @default(DAILY)
+  createdAt    DateTime          @default(now())
+
+  household       Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  pet             Pet?             @relation(fields: [petId], references: [id], onDelete: SetNull)
+  taskCompletions TaskCompletion[]
+
+  @@map("tasks")
+}
+
+model TaskCompletion {
+  id                String   @id @default(uuid())
+  taskId            String
+  completedByUserId String
+  completedAt       DateTime @default(now())
+  date              DateTime @db.Date
+
+  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  completedBy User @relation(fields: [completedByUserId], references: [id])
+
+  @@unique([taskId, date])
+  @@map("task_completions")
+}

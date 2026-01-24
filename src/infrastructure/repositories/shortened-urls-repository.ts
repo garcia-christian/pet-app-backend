@@ -1,10 +1,11 @@
 import { ShortenedUrl } from '@domain/entities';
 import type { ShortenedUrlsRepository } from '@domain/repositories';
+import type { ApiResponse } from '@domain/types/api-response';
 import { Prisma, type PrismaClient, type ShortenedUrl as ShortenedUrlModel } from '@prisma/client';
 
 export function makeShortenedUrlsRepository(db: PrismaClient): ShortenedUrlsRepository {
   return {
-    async create(shortenedUrl) {
+    async create(shortenedUrl): Promise<ApiResponse<ShortenedUrl>> {
       try {
         const record = await db.shortenedUrl.create({
           data: {
