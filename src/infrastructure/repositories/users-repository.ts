@@ -10,8 +10,9 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
         const record = await db.user.create({
           data: {
             id: user.id,
-            googleId: user.googleId,
+            googleId: user.googleId ?? null,
             name: user.name,
+            password: user.password ?? null,
             email: user.email,
             avatarUrl: user.avatarUrl,
           },
@@ -57,6 +58,7 @@ function toEntity(record: UserModel): User {
     googleId: record.googleId,
     name: record.name,
     email: record.email,
+    password: record.password,
     avatarUrl: record.avatarUrl,
   });
 }
