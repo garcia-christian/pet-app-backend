@@ -49,6 +49,17 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
         return { ok: false, error: message };
       }
     },
+    async findByEmail(email: string): Promise<User | null> {
+      try {
+        const record = await db.user.findUnique({ where: { email } });
+        if (!record) {
+          return null;
+        }
+        return toEntity(record);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
