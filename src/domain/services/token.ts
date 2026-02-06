@@ -1,17 +1,14 @@
 export interface TokenPayload {
   userId: string;
   email: string;
-  [key: string]: unknown; // Allow additional claims
+  [key: string]: unknown;
 }
 
 export interface TokenService {
-  /**
-   * Generate a token (JWT or other implementation)
-   */
-  generate(payload: TokenPayload, expiresIn?: string | number): Promise<string>;
-
-  /**
-   * Verify and decode a token
-   */
-  verify(token: string): Promise<TokenPayload | null>;
+  generateAccessToken(payload: TokenPayload, expiresIn?: string | number): Promise<string>;
+  generateRefreshToken(payload: TokenPayload, expiresIn?: string | number): Promise<string>;
+  verifyAccess(token: string): Promise<TokenPayload | null>;
+  verifyRefresh(token: string): Promise<TokenPayload | null>;
 }
+
+//commeny
