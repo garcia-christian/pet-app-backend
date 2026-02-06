@@ -1,8 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { jwtService } from './auth/jwt-token';
+import { passwordCrypto } from './auth/password';
 import { makeConfig } from './config';
-import { passwordCrypto } from './crypto';
-import { jwtService } from './jwt';
 import { makeLogger } from './logger';
 import { makeShortenedUrlsRepository } from './repositories/shortened-urls-repository';
 import { makeUsersRepository } from './repositories/users-repository';
@@ -40,6 +40,10 @@ export async function makeDependencies() {
       shortenedUrlsRepository,
       visitsRepository,
       usersRepository,
+    },
+    auth: {
+      passwordCrypto,
+      jwtService,
     },
     dispose: async () => {
       await db.$disconnect();
