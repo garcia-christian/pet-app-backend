@@ -43,9 +43,7 @@ export default async function userController(fastify: FastifyInstance) {
         .exhaustive();
     },
   });
-  fastify.route<{
-    Body: { email: string; password: string };
-  }>({
+  fastify.route({
     method: 'POST',
     url: '/api/v1/auth/login',
     schema: {
@@ -53,13 +51,11 @@ export default async function userController(fastify: FastifyInstance) {
       tags: ['authentication'],
       response: {
         200: {
-          description: 'User logged in successfully',
           type: 'object',
           properties: {
             token: { type: 'string' },
-            userId: { type: 'string' },
           },
-          required: ['token', 'userId'],
+          required: ['token'],
         },
         400: { $ref: 'ErrorResponse#' },
         401: { $ref: 'ErrorResponse#' },
@@ -70,15 +66,24 @@ export default async function userController(fastify: FastifyInstance) {
     handler: async (request, reply) => {
       const result = await loginUser(
         {
-          email: request.body.email,
-          password: request.body.password,
+          basicAuth: request.headers.authorization || '',
         },
         fastify.dependencies,
       );
+
       return match(result)
-        .with({ type: 'success' }, ({ token, userId }) => reply.status(200).send({ token, userId }))
+        .with({ type: 'invalid_basic_auth' }, () =>
+          reply
+            .status(401)
+            .header('WWW-Authenticate', 'Basic realm="Login"')
+            .send({ message: 'Missing or invalid Authorization header', statusCode: 401 }),
+        )
+        .with({ type: 'success' }, ({ token }) => reply.status(200).send({ token }))
         .with({ type: 'invalid_credentials' }, () =>
-          reply.status(401).send({ message: 'Invalid email or password', statusCode: 401 }),
+          reply
+            .status(401)
+            .header('WWW-Authenticate', 'Basic realm="Login"')
+            .send({ message: 'Missing or invalid Authorization header', statusCode: 401 }),
         )
         .with({ type: 'user_not_found' }, () => reply.status(404).send({ message: 'User not found', statusCode: 404 }))
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))

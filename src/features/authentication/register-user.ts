@@ -1,5 +1,5 @@
 import { User } from '@domain/entities';
-import { passwordCrypto } from '@infrastructure/crypto/password';
+import { passwordCrypto } from '@infrastructure/auth/password';
 import type { UseCaseDependencies } from '@infrastructure/di';
 import { z } from 'zod';
 
