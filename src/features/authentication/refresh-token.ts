@@ -8,7 +8,7 @@ const refreshParamsSchema = z.object({
 export type RefreshTokenParams = z.input<typeof refreshParamsSchema>;
 
 export type RefreshTokenResult =
-  | { type: 'success'; accessToken: string; refreshToken: string }
+  | { type: 'success'; token: string; refreshToken: string }
   | { type: 'invalid_token' }
   | { type: 'user_not_found' }
   | { type: 'error' };
@@ -41,8 +41,8 @@ export async function refreshToken(
 
   const user = userResult.data;
 
-  const accessToken = await jwtService.generateAccessToken({ userId: user.id, email: user.email });
+  const token = await jwtService.generateAccessToken({ userId: user.id, email: user.email });
   const refresh = await jwtService.generateRefreshToken({ userId: user.id, email: user.email });
 
-  return { type: 'success', accessToken, refreshToken: refresh };
+  return { type: 'success', token, refreshToken: refresh };
 }
