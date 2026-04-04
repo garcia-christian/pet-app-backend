@@ -48,6 +48,40 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
         return { ok: false, error: message };
       }
     },
+    async findAll(): Promise<ApiResponse<User[]>> {
+      try {
+        const records = await db.user.findMany();
+        return { ok: true, data: records.map(toEntity) };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'persistence_error';
+        return { ok: false, error: message };
+      }
+    },
+    async update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>): Promise<ApiResponse<User>> {
+      try {
+        const record = await db.user.update({
+          where: { id },
+          data,
+        });
+        return { ok: true, data: toEntity(record) };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+          return { ok: false, error: 'not_found' };
+        }
+        return { ok: false, error: 'persistence_error' };
+      }
+    },
+    async delete(id: string): Promise<ApiResponse<null>> {
+      try {
+        await db.user.delete({ where: { id } });
+        return { ok: true, data: null };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+          return { ok: false, error: 'not_found' };
+        }
+        return { ok: false, error: 'persistence_error' };
+      }
+    },
   };
 }
 

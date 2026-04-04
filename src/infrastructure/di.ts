@@ -2,7 +2,12 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { makeConfig } from './config';
 import { makeLogger } from './logger';
+import { makeHouseholdMembersRepository } from './repositories/household-members-repository';
+import { makeHouseholdsRepository } from './repositories/households-repository';
+import { makePetsRepository } from './repositories/pets-repository';
 import { makeShortenedUrlsRepository } from './repositories/shortened-urls-repository';
+import { makeTaskCompletionsRepository } from './repositories/task-completions-repository';
+import { makeTasksRepository } from './repositories/tasks-repository';
 import { makeUsersRepository } from './repositories/users-repository';
 import { makeVisitsRepository } from './repositories/visits-repository';
 
@@ -23,7 +28,12 @@ export async function makeDependencies() {
 
   await db.$connect();
 
+  const householdMembersRepository = makeHouseholdMembersRepository(db);
+  const householdsRepository = makeHouseholdsRepository(db);
+  const petsRepository = makePetsRepository(db);
   const shortenedUrlsRepository = makeShortenedUrlsRepository(db);
+  const taskCompletionsRepository = makeTaskCompletionsRepository(db);
+  const tasksRepository = makeTasksRepository(db);
   const visitsRepository = makeVisitsRepository(db);
   const usersRepository = makeUsersRepository(db);
 
@@ -32,7 +42,12 @@ export async function makeDependencies() {
     db,
     logger,
     repositories: {
+      householdMembersRepository,
+      householdsRepository,
+      petsRepository,
       shortenedUrlsRepository,
+      taskCompletionsRepository,
+      tasksRepository,
       visitsRepository,
       usersRepository,
     },
