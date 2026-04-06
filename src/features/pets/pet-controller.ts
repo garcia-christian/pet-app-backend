@@ -4,7 +4,6 @@ import { match } from 'ts-pattern';
 import { createPet } from './create-pet';
 import { deletePet } from './delete-pet';
 import { getPet } from './get-pet';
-import { listPets } from './list-pets';
 import { updatePet } from './update-pet';
 
 const petTypeEnum = ['DOG', 'CAT', 'OTHER'];
@@ -18,10 +17,10 @@ const petResponseProperties = {
 } as const;
 
 export default async function petController(fastify: FastifyInstance) {
-  // POST /api/v1/pets
+  // POST /api/v1/pet/create
   fastify.route<{ Body: { householdId: string; name: string; type: string } }>({
     method: 'POST',
-    url: '/api/v1/pets',
+    url: '/api/v1/pet/create',
     schema: {
       summary: 'Create a new pet',
       tags: ['pets'],
@@ -29,19 +28,17 @@ export default async function petController(fastify: FastifyInstance) {
         type: 'object',
         required: ['householdId', 'name', 'type'],
         properties: {
-          householdId: { type: 'string', description: 'Household ID the pet belongs to' },
-          name: { type: 'string', description: 'Name of the pet', example: 'Buddy' },
-          type: { type: 'string', enum: petTypeEnum, description: 'Type of pet', example: 'DOG' },
+          householdId: { type: 'string' },
+          name: { type: 'string', example: 'Buddy' },
+          type: { type: 'string', enum: petTypeEnum, example: 'DOG' },
         },
       },
       response: {
         201: {
           description: 'Pet created',
           type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
+          properties: petResponseProperties,
+          required: ['id', 'householdId', 'name', 'type'],
         },
         400: { $ref: 'ErrorResponse#' },
         500: { $ref: 'ErrorResponse#' },
@@ -63,53 +60,10 @@ export default async function petController(fastify: FastifyInstance) {
     },
   });
 
-  // GET /api/v1/pets?householdId=xxx
-  fastify.route<{ Querystring: { householdId: string } }>({
-    method: 'GET',
-    url: '/api/v1/pets',
-    schema: {
-      summary: 'List pets by household',
-      tags: ['pets'],
-      querystring: {
-        type: 'object',
-        required: ['householdId'],
-        properties: {
-          householdId: { type: 'string', description: 'Household ID to filter pets by' },
-        },
-      },
-      response: {
-        200: {
-          description: 'List of pets',
-          type: 'object',
-          properties: {
-            pets: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: petResponseProperties,
-                required: ['id', 'householdId', 'name', 'type', 'createdAt'],
-              },
-            },
-          },
-          required: ['pets'],
-        },
-        400: { $ref: 'ErrorResponse#' },
-        500: { $ref: 'ErrorResponse#' },
-      },
-    },
-    handler: async (request, reply) => {
-      const result = await listPets({ householdId: request.query.householdId }, fastify.dependencies);
-      return match(result)
-        .with({ type: 'success' }, ({ pets }) => reply.status(200).send({ pets }))
-        .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
-        .exhaustive();
-    },
-  });
-
-  // GET /api/v1/pets/:id
+  // GET /api/v1/pet/:id
   fastify.route<{ Params: { id: string } }>({
     method: 'GET',
-    url: '/api/v1/pets/:id',
+    url: '/api/v1/pet/:id',
     schema: {
       summary: 'Get a pet by ID',
       tags: ['pets'],
@@ -117,7 +71,7 @@ export default async function petController(fastify: FastifyInstance) {
         type: 'object',
         required: ['id'],
         properties: {
-          id: { type: 'string', description: 'Pet ID' },
+          id: { type: 'string' },
         },
       },
       response: {
@@ -141,10 +95,10 @@ export default async function petController(fastify: FastifyInstance) {
     },
   });
 
-  // PUT /api/v1/pets/:id
+  // PUT /api/v1/pet/:id
   fastify.route<{ Params: { id: string }; Body: { name?: string; type?: string } }>({
     method: 'PUT',
-    url: '/api/v1/pets/:id',
+    url: '/api/v1/pet/:id',
     schema: {
       summary: 'Update a pet',
       tags: ['pets'],
@@ -152,23 +106,21 @@ export default async function petController(fastify: FastifyInstance) {
         type: 'object',
         required: ['id'],
         properties: {
-          id: { type: 'string', description: 'Pet ID' },
+          id: { type: 'string' },
         },
       },
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string', description: 'Name of the pet', example: 'Buddy' },
-          type: { type: 'string', enum: petTypeEnum, description: 'Type of pet', example: 'DOG' },
+          name: { type: 'string' },
+          type: { type: 'string', enum: petTypeEnum },
         },
       },
       response: {
         200: {
           description: 'Pet updated',
           type: 'object',
-          properties: {
-            message: { type: 'string' },
-          },
+          properties: { message: { type: 'string' } },
           required: ['message'],
         },
         404: { $ref: 'ErrorResponse#' },
@@ -192,10 +144,10 @@ export default async function petController(fastify: FastifyInstance) {
     },
   });
 
-  // DELETE /api/v1/pets/:id
+  // DELETE /api/v1/pet/:id
   fastify.route<{ Params: { id: string } }>({
     method: 'DELETE',
-    url: '/api/v1/pets/:id',
+    url: '/api/v1/pet/:id',
     schema: {
       summary: 'Delete a pet',
       tags: ['pets'],
@@ -203,16 +155,14 @@ export default async function petController(fastify: FastifyInstance) {
         type: 'object',
         required: ['id'],
         properties: {
-          id: { type: 'string', description: 'Pet ID' },
+          id: { type: 'string' },
         },
       },
       response: {
         200: {
           description: 'Pet deleted',
           type: 'object',
-          properties: {
-            message: { type: 'string' },
-          },
+          properties: { message: { type: 'string' } },
           required: ['message'],
         },
         404: { $ref: 'ErrorResponse#' },

@@ -17,6 +17,18 @@ export function makeHouseholdsRepository(db: PrismaClient): HouseholdsRepository
       }
     },
 
+    async findByInviteCode(inviteCode: string): Promise<ApiResponse<Household>> {
+      try {
+        const record = await db.household.findUnique({ where: { inviteCode } });
+        if (!record) {
+          return { ok: true, data: null };
+        }
+        return { ok: true, data: toEntity(record) };
+      } catch {
+        return { ok: false, error: 'persistence_error' };
+      }
+    },
+
     async findAll(): Promise<ApiResponse<Household[]>> {
       try {
         const records = await db.household.findMany({ orderBy: { createdAt: 'desc' } });
@@ -32,6 +44,7 @@ export function makeHouseholdsRepository(db: PrismaClient): HouseholdsRepository
           data: {
             id: household.id,
             name: household.name,
+            inviteCode: household.inviteCode,
           },
         });
         return { ok: true, data: toEntity(record) };
@@ -73,6 +86,7 @@ function toEntity(record: HouseholdModel): Household {
   return new Household({
     id: record.id,
     name: record.name,
+    inviteCode: record.inviteCode,
     createdAt: record.createdAt,
   });
 }

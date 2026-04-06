@@ -30,6 +30,32 @@ export function makeHouseholdMembersRepository(db: PrismaClient): HouseholdMembe
       }
     },
 
+    async findByUserId(userId: string): Promise<ApiResponse<HouseholdMember[]>> {
+      try {
+        const records = await db.householdMember.findMany({
+          where: { userId },
+          orderBy: { joinedAt: 'desc' },
+        });
+        return { ok: true, data: records.map(toEntity) };
+      } catch {
+        return { ok: false, error: 'persistence_error' };
+      }
+    },
+
+    async findByHouseholdAndUser(householdId: string, userId: string): Promise<ApiResponse<HouseholdMember>> {
+      try {
+        const record = await db.householdMember.findUnique({
+          where: { householdId_userId: { householdId, userId } },
+        });
+        if (!record) {
+          return { ok: true, data: null };
+        }
+        return { ok: true, data: toEntity(record) };
+      } catch {
+        return { ok: false, error: 'persistence_error' };
+      }
+    },
+
     async create(member: HouseholdMember): Promise<ApiResponse<HouseholdMember>> {
       try {
         const record = await db.householdMember.create({

@@ -8,7 +8,7 @@ const createUserParamsSchema = z.object({
   name: z.string().min(1),
   password: z.string().min(6),
   email: z.email(),
-  avatarUrl: z.string().nullable().default(null),
+  image: z.string().nullable().default(null),
 });
 
 export type CreateUserParams = z.input<typeof createUserParamsSchema>;
@@ -30,7 +30,7 @@ export async function registerUser(
     name: validated.name,
     email: validated.email,
     password: hashedPassword,
-    avatarUrl: validated.avatarUrl,
+    image: validated.image,
   });
 
   const result = await repositories.usersRepository.create(user);

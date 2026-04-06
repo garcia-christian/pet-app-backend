@@ -1,5 +1,7 @@
+export * from './feeding-events-repository';
 export * from './household-members-repository';
 export * from './households-repository';
+export * from './meal-schedules-repository';
 export * from './pets-repository';
 export * from './shortened-urls-repository';
 export * from './task-completions-repository';

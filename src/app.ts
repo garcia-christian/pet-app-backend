@@ -3,16 +3,20 @@ import Helmet from '@fastify/helmet';
 import type { Dependencies } from '@infrastructure/di';
 import type { FastifyInstance } from 'fastify';
 import userController from './features/authentication/auth-controller';
+import feedingEventController from './features/feeding-events/feeding-event-controller';
 import householdMemberController from './features/household-members/household-member-controller';
 import householdController from './features/households/household-controller';
+import mealScheduleController from './features/meal-schedules/meal-schedule-controller';
 import petController from './features/pets/pet-controller';
 import taskCompletionController from './features/task-completions/task-completion-controller';
 import taskController from './features/tasks/task-controller';
 import urlShortenerController from './features/url-shortener/url-shortener-controller';
+import authPlugin from './plugins/auth';
 import dependencyInjectionPlugin from './plugins/dependency-injection';
 import errorHandlerPlugin from './plugins/error-handler';
 import healthPlugin from './plugins/health';
 import rateLimitPlugin from './plugins/rate-limit';
+import responseWrapperPlugin from './plugins/response-wrapper';
 import swaggerPlugin from './plugins/swagger';
 
 export async function app(fastify: FastifyInstance, dependencies: Dependencies) {
@@ -34,10 +38,14 @@ export async function app(fastify: FastifyInstance, dependencies: Dependencies) 
 
   await fastify.register(rateLimitPlugin);
   await fastify.register(errorHandlerPlugin);
+  await fastify.register(authPlugin);
+  await fastify.register(responseWrapperPlugin);
   await fastify.register(healthPlugin);
   await fastify.register(householdController);
   await fastify.register(householdMemberController);
   await fastify.register(petController);
+  await fastify.register(mealScheduleController);
+  await fastify.register(feedingEventController);
   await fastify.register(urlShortenerController);
   await fastify.register(userController);
   await fastify.register(taskCompletionController);

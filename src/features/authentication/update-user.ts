@@ -6,7 +6,7 @@ const updateUserParamsSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).optional(),
   email: z.email().optional(),
-  avatarUrl: z.string().nullable().optional(),
+  image: z.string().nullable().optional(),
 });
 
 export type UpdateUserParams = z.input<typeof updateUserParamsSchema>;

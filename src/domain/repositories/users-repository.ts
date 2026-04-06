@@ -7,6 +7,6 @@ export interface UsersRepository {
   findAll(): Promise<ApiResponse<User[]>>;
   findByEmail(email: string): Promise<User | null>;
   create(user: User): Promise<ApiResponse<User>>;
-  update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>): Promise<ApiResponse<User>>;
+  update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'image'>>): Promise<ApiResponse<User>>;
   delete(id: string): Promise<ApiResponse<null>>;
 }

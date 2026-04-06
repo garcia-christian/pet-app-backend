@@ -1,4 +1,3 @@
-import type { Household } from '@domain/entities';
 import type { UseCaseDependencies } from '@infrastructure/di';
 import { z } from 'zod';
 
@@ -7,7 +6,10 @@ const getHouseholdParamsSchema = z.object({
 });
 
 export type GetHouseholdParams = z.input<typeof getHouseholdParamsSchema>;
-export type GetHouseholdResult = { type: 'success'; household: Household } | { type: 'not_found' } | { type: 'error' };
+export type GetHouseholdResult =
+  | { type: 'success'; household: { id: string; name: string; inviteCode: string; createdAt: string } }
+  | { type: 'not_found' }
+  | { type: 'error' };
 
 export async function getHousehold(
   params: GetHouseholdParams,
@@ -23,7 +25,15 @@ export async function getHousehold(
     if (!result.data) {
       return { type: 'not_found' };
     }
-    return { type: 'success', household: result.data };
+    return {
+      type: 'success',
+      household: {
+        id: result.data.id,
+        name: result.data.name,
+        inviteCode: result.data.inviteCode,
+        createdAt: result.data.createdAt.toISOString(),
+      },
+    };
   }
 
   if (result.error) logger.error('Failed to get household');

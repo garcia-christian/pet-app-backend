@@ -4,8 +4,10 @@ import { jwtService } from './auth/jwt-token';
 import { passwordCrypto } from './auth/password';
 import { makeConfig } from './config';
 import { makeLogger } from './logger';
+import { makeFeedingEventsRepository } from './repositories/feeding-events-repository';
 import { makeHouseholdMembersRepository } from './repositories/household-members-repository';
 import { makeHouseholdsRepository } from './repositories/households-repository';
+import { makeMealSchedulesRepository } from './repositories/meal-schedules-repository';
 import { makePetsRepository } from './repositories/pets-repository';
 import { makeShortenedUrlsRepository } from './repositories/shortened-urls-repository';
 import { makeTaskCompletionsRepository } from './repositories/task-completions-repository';
@@ -31,8 +33,10 @@ export async function makeDependencies() {
 
   await db.$connect();
 
+  const feedingEventsRepository = makeFeedingEventsRepository(db);
   const householdMembersRepository = makeHouseholdMembersRepository(db);
   const householdsRepository = makeHouseholdsRepository(db);
+  const mealSchedulesRepository = makeMealSchedulesRepository(db);
   const petsRepository = makePetsRepository(db);
   const shortenedUrlsRepository = makeShortenedUrlsRepository(db);
   const taskCompletionsRepository = makeTaskCompletionsRepository(db);
@@ -47,8 +51,10 @@ export async function makeDependencies() {
     passwordCrypto,
     jwtService,
     repositories: {
+      feedingEventsRepository,
       householdMembersRepository,
       householdsRepository,
+      mealSchedulesRepository,
       petsRepository,
       shortenedUrlsRepository,
       taskCompletionsRepository,

@@ -66,19 +66,21 @@ model User {
   email     String   @unique
   name      String
   password  String?
-  avatarUrl String?
+  image     String?
   createdAt DateTime @default(now())
 
   households      HouseholdMember[]
   taskCompletions TaskCompletion[]
+  feedingEvents   FeedingEvent[]
 
   @@map("users")
 }
 
 model Household {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  name       String
+  inviteCode String   @unique @default(uuid())
+  createdAt  DateTime @default(now())
 
   members HouseholdMember[]
   pets    Pet[]
@@ -108,10 +110,42 @@ model Pet {
   type        PetType @default(OTHER)
   createdAt  DateTime @default(now())
 
-  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  tasks         Task[]
+  mealSchedules MealSchedule[]
+  feedingEvents FeedingEvent[]
 
   @@map("pets")
+}
+
+model MealSchedule {
+  id            String @id @default(uuid())
+  petId         String
+  mealName      String
+  scheduledTime String
+  graceMinutes  Int    @default(15)
+  createdAt     DateTime @default(now())
+
+  pet           Pet            @relation(fields: [petId], references: [id], onDelete: Cascade)
+  feedingEvents FeedingEvent[]
+
+  @@map("meal_schedules")
+}
+
+model FeedingEvent {
+  id             String   @id @default(uuid())
+  petId          String
+  mealScheduleId String
+  userId         String
+  fedAt          DateTime @default(now())
+  remarks        String?
+  createdAt      DateTime @default(now())
+
+  pet          Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
+  mealSchedule MealSchedule @relation(fields: [mealScheduleId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@map("feeding_events")
 }
 
 model Task {

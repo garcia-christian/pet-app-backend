@@ -1,21 +1,23 @@
 import type { FastifyInstance } from 'fastify';
 import { match } from 'ts-pattern';
+import { getCurrentUser } from './get-current-user';
 import { loginUser } from './login-user';
+import { logoutUser } from './logout-user';
 import { refreshToken } from './refresh-token';
 import { registerUser } from './register-user';
 
 export default async function userController(fastify: FastifyInstance) {
   fastify.route<{
-    Body: { googleId: string; name: string; email: string; avatarUrl?: string | null; password: string };
+    Body: { googleId: string; name: string; email: string; image?: string | null; password: string };
   }>({
     method: 'POST',
     url: '/api/v1/auth/register',
     schema: {
       summary: 'Create a new user',
-      tags: ['users'],
+      tags: ['authentication'],
       response: {
         201: {
-          description: 'Shortened URL created',
+          description: 'User created',
           type: 'object',
           properties: {
             id: { type: 'string' },
@@ -34,7 +36,7 @@ export default async function userController(fastify: FastifyInstance) {
           name: request.body.name,
           password: request.body.password,
           email: request.body.email,
-          avatarUrl: request.body.avatarUrl ?? null,
+          image: request.body.image ?? null,
         },
         fastify.dependencies,
       );
@@ -44,6 +46,7 @@ export default async function userController(fastify: FastifyInstance) {
         .exhaustive();
     },
   });
+
   fastify.route({
     method: 'POST',
     url: '/api/v1/auth/login',
@@ -136,6 +139,70 @@ export default async function userController(fastify: FastifyInstance) {
           reply.status(401).send({ message: 'Invalid refresh token', statusCode: 401 }),
         )
         .with({ type: 'user_not_found' }, () => reply.status(404).send({ message: 'User not found', statusCode: 404 }))
+        .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
+        .exhaustive();
+    },
+  });
+
+  // GET /auth/me — return current user from JWT
+  fastify.route({
+    method: 'GET',
+    url: '/api/v1/auth/me',
+    schema: {
+      summary: 'Get current authenticated user',
+      tags: ['authentication'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            image: { type: 'string', nullable: true },
+            householdId: { type: 'string', nullable: true },
+          },
+          required: ['id', 'name'],
+        },
+        401: { $ref: 'ErrorResponse#' },
+        404: { $ref: 'ErrorResponse#' },
+        500: { $ref: 'ErrorResponse#' },
+      },
+    },
+    preHandler: [fastify.authenticate],
+    handler: async (request, reply) => {
+      const result = await getCurrentUser({ userId: request.currentUser!.userId }, fastify.dependencies);
+
+      return match(result)
+        .with({ type: 'success' }, ({ user }) => reply.status(200).send(user))
+        .with({ type: 'not_found' }, () => reply.status(404).send({ message: 'User not found', statusCode: 404 }))
+        .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
+        .exhaustive();
+    },
+  });
+
+  // POST /auth/logout — invalidate session
+  fastify.route({
+    method: 'POST',
+    url: '/api/v1/auth/logout',
+    schema: {
+      summary: 'Logout user',
+      tags: ['authentication'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            data: { type: 'boolean' },
+          },
+        },
+        401: { $ref: 'ErrorResponse#' },
+        500: { $ref: 'ErrorResponse#' },
+      },
+    },
+    preHandler: [fastify.authenticate],
+    handler: async (_request, reply) => {
+      const result = await logoutUser(fastify.dependencies);
+
+      return match(result)
+        .with({ type: 'success' }, () => reply.status(200).send(true))
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();
     },

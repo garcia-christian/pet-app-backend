@@ -14,7 +14,7 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
             name: user.name,
             password: user.password ?? null,
             email: user.email,
-            avatarUrl: user.avatarUrl,
+            image: user.image,
           },
         });
         return { ok: true, data: toEntity(record) };
@@ -69,7 +69,7 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
         return { ok: false, error: message };
       }
     },
-    async update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>): Promise<ApiResponse<User>> {
+    async update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'image'>>): Promise<ApiResponse<User>> {
       try {
         const record = await db.user.update({
           where: { id },
@@ -104,6 +104,6 @@ function toEntity(record: UserModel): User {
     name: record.name,
     email: record.email,
     password: record.password,
-    avatarUrl: record.avatarUrl,
+    image: record.image,
   });
 }

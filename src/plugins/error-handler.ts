@@ -7,13 +7,13 @@ type ValidationError = {
   message: string;
 };
 
-type ErrorResponse = {
+type ErrorResponseBody = {
   message: string;
   statusCode: number;
   errors?: ValidationError[];
 };
 
-function buildErrorResponse(error: Error, logger: FastifyInstance['log']): ErrorResponse {
+function buildErrorResponse(error: Error, logger: FastifyInstance['log']): ErrorResponseBody {
   if (error instanceof ZodError) {
     logger.warn({ issues: error.issues }, 'Validation failed');
     return {
@@ -51,6 +51,7 @@ function buildErrorResponse(error: Error, logger: FastifyInstance['log']): Error
 async function errorHandlerPlugin(fastify: FastifyInstance) {
   fastify.setErrorHandler((error: FastifyError, _, reply: FastifyReply) => {
     const response = buildErrorResponse(error, fastify.log);
+    // Return raw error — the response-wrapper plugin will wrap it in { meta: { ... } }
     return reply.status(response.statusCode).send(response);
   });
 

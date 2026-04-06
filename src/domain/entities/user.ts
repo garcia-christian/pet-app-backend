@@ -4,7 +4,7 @@ export class User {
   readonly email: string;
   readonly password: string | null;
   readonly name: string;
-  readonly avatarUrl: string | null;
+  readonly image: string | null;
 
   constructor(params: {
     id: string;
@@ -12,13 +12,13 @@ export class User {
     email: string;
     password: string | null;
     name: string;
-    avatarUrl: string | null;
+    image: string | null;
   }) {
     this.id = params.id;
     this.googleId = params.googleId;
     this.email = params.email;
     this.password = params.password;
     this.name = params.name;
-    this.avatarUrl = params.avatarUrl;
+    this.image = params.image;
   }
 }
