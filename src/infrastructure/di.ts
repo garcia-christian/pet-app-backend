@@ -1,5 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { jwtService } from './auth/jwt-token';
+import { passwordCrypto } from './auth/password';
 import { makeConfig } from './config';
 import { makeLogger } from './logger';
 import { makeHouseholdMembersRepository } from './repositories/household-members-repository';
@@ -14,6 +16,7 @@ import { makeVisitsRepository } from './repositories/visits-repository';
 export async function makeDependencies() {
   const config = makeConfig();
   const logger = makeLogger(config);
+
   const adapter = new PrismaPg({ connectionString: config.DATABASE_URL });
   const db = new PrismaClient({
     adapter,
@@ -41,6 +44,8 @@ export async function makeDependencies() {
     config,
     db,
     logger,
+    passwordCrypto,
+    jwtService,
     repositories: {
       householdMembersRepository,
       householdsRepository,
@@ -51,6 +56,10 @@ export async function makeDependencies() {
       visitsRepository,
       usersRepository,
     },
+    auth: {
+      passwordCrypto,
+      jwtService,
+    },
     dispose: async () => {
       await db.$disconnect();
     },
@@ -59,4 +68,4 @@ export async function makeDependencies() {
 
 export type Dependencies = Awaited<ReturnType<typeof makeDependencies>>;
 
-export type UseCaseDependencies = Pick<Dependencies, 'logger' | 'repositories'>;
+export type UseCaseDependencies = Pick<Dependencies, 'logger' | 'repositories' | 'passwordCrypto' | 'jwtService'>;

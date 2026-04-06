@@ -10,8 +10,9 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
         const record = await db.user.create({
           data: {
             id: user.id,
-            googleId: user.googleId,
+            googleId: user.googleId ?? null,
             name: user.name,
+            password: user.password ?? null,
             email: user.email,
             avatarUrl: user.avatarUrl,
           },
@@ -46,6 +47,17 @@ export function makeUsersRepository(db: PrismaClient): UsersRepository {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'persistence_error';
         return { ok: false, error: message };
+      }
+    },
+    async findByEmail(email: string): Promise<User | null> {
+      try {
+        const record = await db.user.findUnique({ where: { email } });
+        if (!record) {
+          return null;
+        }
+        return toEntity(record);
+      } catch {
+        return null;
       }
     },
     async findAll(): Promise<ApiResponse<User[]>> {
@@ -91,6 +103,7 @@ function toEntity(record: UserModel): User {
     googleId: record.googleId,
     name: record.name,
     email: record.email,
+    password: record.password,
     avatarUrl: record.avatarUrl,
   });
 }
