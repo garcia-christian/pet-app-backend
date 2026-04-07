@@ -311,7 +311,7 @@ export default async function householdController(fastify: FastifyInstance) {
         fastify.dependencies,
       );
       return match(result)
-        .with({ type: 'success' }, () => reply.status(200).send(true))
+        .with({ type: 'success' }, () => reply.status(200).send({ data: true }))
         .with({ type: 'not_found' }, () => reply.status(404).send({ message: 'Membership not found', statusCode: 404 }))
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();

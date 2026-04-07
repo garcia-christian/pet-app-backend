@@ -54,7 +54,7 @@ export default async function petController(fastify: FastifyInstance) {
         fastify.dependencies,
       );
       return match(result)
-        .with({ type: 'success' }, ({ id }) => reply.status(201).send({ id }))
+        .with({ type: 'success' }, ({ pet }) => reply.status(201).send(pet))
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();
     },

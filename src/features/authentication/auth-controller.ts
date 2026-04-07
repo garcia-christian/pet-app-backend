@@ -202,7 +202,7 @@ export default async function userController(fastify: FastifyInstance) {
       const result = await logoutUser(fastify.dependencies);
 
       return match(result)
-        .with({ type: 'success' }, () => reply.status(200).send(true))
+        .with({ type: 'success' }, () => reply.status(200).send({ data: true }))
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();
     },

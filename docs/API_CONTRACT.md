@@ -48,7 +48,7 @@ http://localhost:3000/api/v1
 }
 ```
 
-> **⚠ MISMATCH:** Backend currently returns raw entities without the `success`/`message`/`statusCode`/`data` wrapper. Backend needs a response wrapper middleware.
+> **✅ RESOLVED:** Response wrapper middleware added. All responses are now wrapped in `{ success, message, statusCode, data }` envelope for success or `{ meta: { message, statusCode } }` for errors.
 
 ---
 
@@ -71,7 +71,7 @@ http://localhost:3000/api/v1
   "householdId": "uuid | null"
 }
 ```
-> **⚠ MISMATCH:** Backend uses `avatarUrl` — frontend expects `image`. Backend `User` has no `householdId` field (membership is via `HouseholdMember` join table).
+> **✅ ALIGNED:** Backend uses `image` field and includes `householdId` (derived from `HouseholdMember` join table) in User responses.
 
 ### Household
 ```json
@@ -82,7 +82,7 @@ http://localhost:3000/api/v1
   "createdAt": "ISO-8601"
 }
 ```
-> **⚠ MISMATCH:** Backend `Household` has no `inviteCode` field. This needs to be added to the backend schema.
+> **✅ ALIGNED:** Backend `Household` includes `inviteCode` field with auto-generation logic.
 
 ### Pet
 ```json
@@ -90,10 +90,10 @@ http://localhost:3000/api/v1
   "id": "uuid",
   "householdId": "uuid",
   "name": "string",
-  "type": "string"
+  "type": "DOG | CAT | OTHER"
 }
 ```
-> **Note:** Backend uses enum `DOG | CAT | OTHER`. Frontend treats `type` as a free string. Align on enum values or make backend accept arbitrary strings.
+> **✅ Aligned:** Both frontend and backend use the `PetType` enum with values `DOG`, `CAT`, `OTHER`.
 
 ### MealSchedule
 ```json
@@ -105,9 +105,7 @@ http://localhost:3000/api/v1
   "graceMinutes": 15
 }
 ```
-> **⚠ MISMATCH:** Backend has no `MealSchedule` model. It has `Task` with `taskType` (FEED/WALK/CLEAN/OTHER) and `scheduleType` (DAILY/ONCE). Either:
-> - Backend adds a `MealSchedule` model, OR
-> - Frontend adapts to use the `Task` model for feeding schedules
+> **✅ ALIGNED:** Backend has `MealSchedule` model with all required fields. Endpoints implemented at `/api/v1/mealschedule/*` and `/api/v1/pet/:petId/mealschedules`.
 
 ### FeedingEvent
 ```json
@@ -121,7 +119,7 @@ http://localhost:3000/api/v1
   "createdAt": "ISO-8601"
 }
 ```
-> **⚠ MISMATCH:** Backend has `TaskCompletion` instead, with fields: `taskId`, `completedByUserId`, `completedAt`, `date`. It lacks `remarks` and has a unique constraint on `(taskId, date)` — meaning only one completion per task per day. Frontend expects multiple feeding events per meal per day.
+> **✅ ALIGNED:** Backend has `FeedingEvent` model with fields: `id`, `petId`, `mealScheduleId`, `userId`, `fedAt`, `remarks`, `createdAt`. Multiple feeding events per meal per day are supported.
 
 ---
 
@@ -133,8 +131,8 @@ http://localhost:3000/api/v1
 |--------|-----------------|-------------|--------|
 | POST | `/auth/login` | `/auth/login` | ✅ Match (both use Basic Auth) |
 | POST | `/auth/refresh` | `/auth/refresh` | ✅ Match |
-| GET | `/auth/me` | — | ❌ **Missing in backend** |
-| POST | `/auth/logout` | — | ❌ **Missing in backend** |
+| GET | `/auth/me` | `/auth/me` | ✅ Match |
+| POST | `/auth/logout` | `/auth/logout` | ✅ Match |
 | POST | — | `/auth/register` | ⚠ Backend has, frontend doesn't use yet |
 
 #### POST `/auth/login`
@@ -162,11 +160,11 @@ http://localhost:3000/api/v1
 
 | Method | Frontend Expects | Backend Has | Status |
 |--------|-----------------|-------------|--------|
-| POST | `/household/create` | `/households` | ⚠ **Path mismatch** |
-| POST | `/household/join` | — | ❌ **Missing** (no invite code system) |
-| GET | `/household/{id}` | `/households/{id}` | ⚠ **Path mismatch** |
-| GET | `/household/{id}/members` | `/household-members?householdId={id}` | ⚠ **Path vs query param** |
-| POST | `/household/{id}/leave` | `/household-members/{id}` (DELETE) | ⚠ **Different approach** |
+| POST | `/household/create` | `/household/create` | ✅ Match |
+| POST | `/household/join` | `/household/join` | ✅ Match |
+| GET | `/household/{id}` | `/household/{id}` | ✅ Match |
+| GET | `/household/{id}/members` | `/household/{id}/members` | ✅ Match |
+| POST | `/household/{id}/leave` | `/household/{id}/leave` | ✅ Match |
 
 #### POST `/household/create`
 - **Request:** `{ "name": "My Household" }`
@@ -191,14 +189,14 @@ http://localhost:3000/api/v1
 
 | Method | Frontend Expects | Backend Has | Status |
 |--------|-----------------|-------------|--------|
-| POST | `/pet/create` | `/pets` | ⚠ **Path mismatch** |
-| PUT | `/pet/{id}` | `/pets/{id}` | ⚠ **Path mismatch** |
-| DELETE | `/pet/{id}` | `/pets/{id}` | ⚠ **Path mismatch** |
-| GET | `/pet/{id}` | `/pets/{id}` | ⚠ **Path mismatch** |
-| GET | `/household/{id}/pets` | `/pets?householdId={id}` | ⚠ **Path vs query param** |
+| POST | `/pet/create` | `/pet/create` | ✅ Match |
+| PUT | `/pet/{id}` | `/pet/{id}` | ✅ Match |
+| DELETE | `/pet/{id}` | `/pet/{id}` | ✅ Match |
+| GET | `/pet/{id}` | `/pet/{id}` | ✅ Match |
+| GET | `/household/{id}/pets` | `/household/{id}/pets` | ✅ Match |
 
 #### POST `/pet/create`
-- **Request:** `{ "householdId": "uuid", "name": "Buddy", "type": "dog" }`
+- **Request:** `{ "householdId": "uuid", "name": "Buddy", "type": "DOG" }`
 - **Response:** `APIResponse<Pet>`
 
 #### GET `/household/{householdId}/pets`
@@ -210,43 +208,48 @@ http://localhost:3000/api/v1
 
 | Method | Frontend Expects | Backend Has | Status |
 |--------|-----------------|-------------|--------|
-| POST | `/mealschedule/create` | — | ❌ **Missing** |
-| PUT | `/mealschedule/{id}` | — | ❌ **Missing** |
-| DELETE | `/mealschedule/{id}` | — | ❌ **Missing** |
-| GET | `/pet/{petId}/mealschedules` | — | ❌ **Missing** |
-
-> Backend has `/tasks` which could serve a similar purpose but with different schema. See Data Models section above.
+| POST | `/mealschedule/create` | `/mealschedule/create` | ✅ Match |
+| PUT | `/mealschedule/{id}` | `/mealschedule/{id}` | ✅ Match |
+| DELETE | `/mealschedule/{id}` | `/mealschedule/{id}` | ✅ Match |
+| GET | `/pet/{petId}/mealschedules` | `/pet/{petId}/mealschedules` | ✅ Match |
 
 ---
 
-## Summary of Required Backend Changes
+### Feeding Events
 
-### Critical (blocking frontend integration)
+| Method | Frontend Expects | Backend Has | Status |
+|--------|-----------------|-------------|--------|
+| POST | `/feeding-events` | `/feeding-events` | ✅ Match |
+| GET | `/feeding-events?petId={id}` | `/feeding-events?petId={id}` | ✅ Match |
+| DELETE | `/feeding-events/{id}` | `/feeding-events/{id}` | ✅ Match |
 
-1. **Response wrapper middleware** — Wrap all responses in `{ success, message, statusCode, data, traceId }` envelope
-2. **GET `/auth/me`** — Return current user from JWT
-3. **POST `/auth/logout`** — Invalidate refresh token
-4. **`inviteCode` on Household** — Add field + generation logic
-5. **POST `/household/join`** — Join household by invite code
-6. **`image` field on User** — Rename `avatarUrl` → `image` OR add alias
-7. **`householdId` on User response** — Derive from `HouseholdMember` and include in User JSON
+---
 
-### Important (feature parity)
+## Summary of Backend Changes
 
-8. **MealSchedule endpoints** — Either add dedicated model or adapt Task model
-9. **FeedingEvent tracking** — Either add dedicated model or adapt TaskCompletion (remove unique-per-day constraint, add remarks)
-10. **POST `/household/{id}/leave`** — Leave household endpoint
+### ✅ All Critical Issues Resolved
 
-### Path Alignment (pick one side)
+1. **Response wrapper middleware** — ✅ Implemented and registered
+2. **GET `/auth/me`** — ✅ Returns current user from JWT with householdId
+3. **POST `/auth/logout`** — ✅ Implemented (stateless JWT, no server-side invalidation)
+4. **`inviteCode` on Household** — ✅ Field exists with generation logic
+5. **POST `/household/join`** — ✅ Join household by invite code implemented
+6. **`image` field on User** — ✅ Using `image` field (not `avatarUrl`)
+7. **`householdId` on User response** — ✅ Derived from `HouseholdMember` and included
 
-Option A: **Backend adapts to frontend paths** (recommended — less Flutter code to change)
-- `/households` → `/household/create`, `/household/{id}`
-- `/pets` → `/pet/create`, `/pet/{id}`
-- `/household-members` → `/household/{id}/members`
-- `/pets?householdId=X` → `/household/{id}/pets`
+### ✅ Feature Parity Achieved
 
-Option B: **Frontend adapts to backend paths**
-- Update all endpoint constants in repository implementations
+8. **MealSchedule model & endpoints** — ✅ Fully implemented
+9. **FeedingEvent model & tracking** — ✅ Fully implemented with remarks support
+10. **POST `/household/{id}/leave`** — ✅ Leave household endpoint implemented
+
+### ✅ Path Alignment Complete
+
+All endpoint paths now match the frontend expectations:
+- `/household/create`, `/household/{id}`, `/household/{id}/members`, `/household/{id}/pets`, `/household/{id}/leave` ✅
+- `/pet/create`, `/pet/{id}` ✅
+- `/mealschedule/create`, `/mealschedule/{id}`, `/pet/{petId}/mealschedules` ✅
+- `/feeding-events` ✅
 
 ---
 
@@ -254,8 +257,8 @@ Option B: **Frontend adapts to backend paths**
 
 | # | Decision | Chosen | Date |
 |---|----------|--------|------|
-| 1 | Response envelope format | TBD — frontend uses wrapper, backend doesn't | |
-| 2 | Path convention (REST vs action-based) | TBD | |
-| 3 | MealSchedule vs Task model | TBD | |
-| 4 | FeedingEvent vs TaskCompletion | TBD | |
-| 5 | Pet type: enum vs free string | TBD | |
+| 1 | Response envelope format | ✅ Wrapper middleware implemented | 2026-04-07 |
+| 2 | Path convention (REST vs action-based) | ✅ Frontend-aligned paths (action-based) | 2026-04-07 |
+| 3 | MealSchedule vs Task model | ✅ Dedicated MealSchedule model | 2026-04-07 |
+| 4 | FeedingEvent vs TaskCompletion | ✅ Dedicated FeedingEvent model | 2026-04-07 |
+| 5 | Pet type: enum vs free string | ✅ Enum (`DOG`, `CAT`, `OTHER`) — aligned | 2026-04-07 |

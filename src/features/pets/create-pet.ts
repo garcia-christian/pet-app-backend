@@ -9,7 +9,12 @@ const createPetParamsSchema = z.object({
 });
 
 export type CreatePetParams = z.input<typeof createPetParamsSchema>;
-export type CreatePetResult = { type: 'success'; id: string } | { type: 'error' };
+export type CreatePetResult =
+  | {
+      type: 'success';
+      pet: { id: string; householdId: string; name: string; type: string; createdAt: Date };
+    }
+  | { type: 'error' };
 
 export async function createPet(
   params: CreatePetParams,
@@ -29,11 +34,20 @@ export async function createPet(
 
   const result = await repositories.petsRepository.create(pet);
 
-  if (result.ok) {
-    logger.info({ id: result.data?.id }, 'Pet created');
-    return { type: 'success', id: result.data?.id ?? '' };
+  if (result.ok && result.data) {
+    logger.info({ id: result.data.id }, 'Pet created');
+    return {
+      type: 'success',
+      pet: {
+        id: result.data.id,
+        householdId: result.data.householdId,
+        name: result.data.name,
+        type: result.data.type,
+        createdAt: result.data.createdAt,
+      },
+    };
   }
 
-  if (result.error) logger.error('Failed to create pet');
+  logger.error('Failed to create pet');
   return { type: 'error' };
 }
