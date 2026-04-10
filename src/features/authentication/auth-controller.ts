@@ -185,7 +185,7 @@ export default async function userController(fastify: FastifyInstance) {
     },
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
-      const result = await getCurrentUser({ userId: request.currentUser?.userId }, fastify.dependencies);
+      const result = await getCurrentUser({ userId: request.currentUser!.userId }, fastify.dependencies);
 
       return match(result)
         .with({ type: 'success' }, ({ user }) => reply.status(200).send(user))
