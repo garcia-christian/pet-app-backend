@@ -9,7 +9,13 @@ const loginUserParamsSchema = z.object({
 export type LoginUserParams = z.input<typeof loginUserParamsSchema>;
 
 export type LoginUserResult =
-  | { type: 'success'; token: string; refreshToken: string }
+  | {
+      type: 'success';
+      token: string;
+      refreshToken: string;
+      tokenExpiresAt: string;
+      refreshTokenExpiresAt: string;
+    }
   | { type: 'invalid_credentials' }
   | { type: 'user_not_found' }
   | { type: 'error' };
@@ -50,6 +56,16 @@ export async function loginUser(
     userId: user.id,
     email: user.email,
   });
+
+  const tokenExpiresAt = jwtService.getTokenExpiresAt(token);
+  const refreshTokenExpiresAt = jwtService.getTokenExpiresAt(refreshToken);
+
   logger.info({ userId: user.id }, 'User logged in successfully');
-  return { type: 'success', token, refreshToken };
+  return {
+    type: 'success',
+    token,
+    refreshToken,
+    tokenExpiresAt: tokenExpiresAt?.toISOString() ?? '',
+    refreshTokenExpiresAt: refreshTokenExpiresAt?.toISOString() ?? '',
+  };
 }

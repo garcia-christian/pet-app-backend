@@ -127,3 +127,14 @@ Validation occurs at two layers:
 2. **Use Case (Zod)**: Business rule validation with type inference. Zod schemas are the source of truth for validation logic.
 
 Domain entities are intentionally simple data containers without internal validation. This is a deliberate design choice: validation happens at the use case boundary (via Zod) before entity construction, ensuring invalid entities cannot be created. This avoids triple-validation overhead while maintaining a single source of truth for business rules.
+
+### TypeScript Typing Rules
+
+**Never use `any` type.** This defeats type safety and makes the codebase harder to maintain. Instead:
+- Use explicit types for all function parameters and return values
+- Use `unknown` when dealing with dynamic data, then narrow the type with type guards
+- Use generics with constraints when needed for flexible types
+- Use discriminated unions for complex return types
+- Leverage type inference where possible (const assignments, function returns)
+
+If you encounter a need for `any`, it's a signal to refactor or clarify the types involved.

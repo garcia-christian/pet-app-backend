@@ -12,11 +12,20 @@ const createUserParamsSchema = z.object({
 });
 
 export type CreateUserParams = z.input<typeof createUserParamsSchema>;
-export type CreateUserResult = { type: 'success'; id: string } | { type: 'error' };
+export type CreateUserResult =
+  | {
+      type: 'success';
+      id: string;
+      token: string;
+      refreshToken: string;
+      tokenExpiresAt: string;
+      refreshTokenExpiresAt: string;
+    }
+  | { type: 'error' };
 
 export async function registerUser(
   params: CreateUserParams,
-  { logger, repositories }: UseCaseDependencies,
+  { logger, repositories, jwtService }: UseCaseDependencies,
 ): Promise<CreateUserResult> {
   logger.info('Creating user');
 
@@ -37,7 +46,28 @@ export async function registerUser(
 
   if (result.ok) {
     logger.info({ id: result.data?.id }, 'User created');
-    return { type: 'success', id: result.data?.id ?? '' };
+    const userId = result.data?.id ?? '';
+
+    const token = await jwtService.generateAccessToken({
+      userId,
+      email: validated.email,
+    });
+    const refreshToken = await jwtService.generateRefreshToken({
+      userId,
+      email: validated.email,
+    });
+
+    const tokenExpiresAt = jwtService.getTokenExpiresAt(token);
+    const refreshTokenExpiresAt = jwtService.getTokenExpiresAt(refreshToken);
+
+    return {
+      type: 'success',
+      id: userId,
+      token,
+      refreshToken,
+      tokenExpiresAt: tokenExpiresAt?.toISOString() ?? '',
+      refreshTokenExpiresAt: refreshTokenExpiresAt?.toISOString() ?? '',
+    };
   }
 
   if (result.error) logger.error('Failed to create user');

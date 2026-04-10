@@ -21,8 +21,12 @@ export default async function userController(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             id: { type: 'string' },
+            token: { type: 'string' },
+            refreshToken: { type: 'string' },
+            tokenExpiresAt: { type: 'string', format: 'date-time' },
+            refreshTokenExpiresAt: { type: 'string', format: 'date-time' },
           },
-          required: ['id'],
+          required: ['id', 'token', 'refreshToken', 'tokenExpiresAt', 'refreshTokenExpiresAt'],
         },
         400: { $ref: 'ErrorResponse#' },
         409: { $ref: 'ErrorResponse#' },
@@ -41,7 +45,9 @@ export default async function userController(fastify: FastifyInstance) {
         fastify.dependencies,
       );
       return match(result)
-        .with({ type: 'success' }, ({ id }) => reply.status(201).send({ id }))
+        .with({ type: 'success' }, ({ id, token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }) =>
+          reply.status(201).send({ id, token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }),
+        )
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();
     },
@@ -59,8 +65,10 @@ export default async function userController(fastify: FastifyInstance) {
           properties: {
             token: { type: 'string' },
             refreshToken: { type: 'string' },
+            tokenExpiresAt: { type: 'string', format: 'date-time' },
+            refreshTokenExpiresAt: { type: 'string', format: 'date-time' },
           },
-          required: ['token', 'refreshToken'],
+          required: ['token', 'refreshToken', 'tokenExpiresAt', 'refreshTokenExpiresAt'],
         },
         400: { $ref: 'ErrorResponse#' },
         401: { $ref: 'ErrorResponse#' },
@@ -90,7 +98,9 @@ export default async function userController(fastify: FastifyInstance) {
       const result = await loginUser(credentials, fastify.dependencies);
 
       return match(result)
-        .with({ type: 'success' }, ({ token, refreshToken }) => reply.status(200).send({ token, refreshToken }))
+        .with({ type: 'success' }, ({ token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }) =>
+          reply.status(200).send({ token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }),
+        )
         .with({ type: 'invalid_credentials' }, () =>
           reply
             .status(401)
@@ -103,7 +113,9 @@ export default async function userController(fastify: FastifyInstance) {
     },
   });
 
-  fastify.route({
+  fastify.route<{
+    Body: { refreshToken: string };
+  }>({
     method: 'POST',
     url: '/api/v1/auth/refresh',
     schema: {
@@ -122,8 +134,10 @@ export default async function userController(fastify: FastifyInstance) {
           properties: {
             token: { type: 'string' },
             refreshToken: { type: 'string' },
+            tokenExpiresAt: { type: 'string', format: 'date-time' },
+            refreshTokenExpiresAt: { type: 'string', format: 'date-time' },
           },
-          required: ['token', 'refreshToken'],
+          required: ['token', 'refreshToken', 'tokenExpiresAt', 'refreshTokenExpiresAt'],
         },
         401: { $ref: 'ErrorResponse#' },
         404: { $ref: 'ErrorResponse#' },
@@ -131,10 +145,12 @@ export default async function userController(fastify: FastifyInstance) {
       },
     },
     handler: async (request, reply) => {
-      const result = await refreshToken({ refreshToken: (request.body as any).refreshToken }, fastify.dependencies);
+      const result = await refreshToken({ refreshToken: request.body.refreshToken }, fastify.dependencies);
 
       return match(result)
-        .with({ type: 'success' }, ({ token, refreshToken }) => reply.status(200).send({ token, refreshToken }))
+        .with({ type: 'success' }, ({ token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }) =>
+          reply.status(200).send({ token, refreshToken, tokenExpiresAt, refreshTokenExpiresAt }),
+        )
         .with({ type: 'invalid_token' }, () =>
           reply.status(401).send({ message: 'Invalid refresh token', statusCode: 401 }),
         )
@@ -169,7 +185,7 @@ export default async function userController(fastify: FastifyInstance) {
     },
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
-      const result = await getCurrentUser({ userId: request.currentUser!.userId }, fastify.dependencies);
+      const result = await getCurrentUser({ userId: request.currentUser?.userId }, fastify.dependencies);
 
       return match(result)
         .with({ type: 'success' }, ({ user }) => reply.status(200).send(user))

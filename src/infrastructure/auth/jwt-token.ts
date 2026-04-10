@@ -51,4 +51,20 @@ export const jwtService: TokenService = {
       return null;
     }
   },
+
+  getTokenExpiresAt(token: string): Date | null {
+    try {
+      const decoded = jwt.decode(token);
+      if (!decoded || typeof decoded === 'string') {
+        return null;
+      }
+      const exp = decoded.exp;
+      if (typeof exp !== 'number') {
+        return null;
+      }
+      return new Date(exp * 1000);
+    } catch {
+      return null;
+    }
+  },
 };

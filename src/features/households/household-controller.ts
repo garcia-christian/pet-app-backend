@@ -43,9 +43,15 @@ export default async function householdController(fastify: FastifyInstance) {
     },
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
-      const result = await createHousehold({ name: request.body.name }, fastify.dependencies);
+      const result = await createHousehold(
+        { name: request.body.name, userId: request.currentUser?.userId },
+        fastify.dependencies,
+      );
       return match(result)
         .with({ type: 'success' }, ({ household }) => reply.status(201).send(household))
+        .with({ type: 'user_already_owns_household' }, () =>
+          reply.status(409).send({ message: 'User already owns a household', statusCode: 409 }),
+        )
         .with({ type: 'error' }, () => reply.status(500).send({ message: 'Internal server error', statusCode: 500 }))
         .exhaustive();
     },
@@ -85,7 +91,7 @@ export default async function householdController(fastify: FastifyInstance) {
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       const result = await joinHousehold(
-        { inviteCode: request.body.inviteCode, userId: request.currentUser!.userId },
+        { inviteCode: request.body.inviteCode, userId: request.currentUser?.userId },
         fastify.dependencies,
       );
       return match(result)
@@ -215,7 +221,7 @@ export default async function householdController(fastify: FastifyInstance) {
       const users = await Promise.all(
         members.map(async (m) => {
           const userResult = await fastify.dependencies.repositories.usersRepository.findById(m.userId);
-          if (userResult && userResult.ok && userResult.data) {
+          if (userResult?.ok && userResult.data) {
             return {
               id: userResult.data.id,
               name: userResult.data.name,
@@ -307,7 +313,7 @@ export default async function householdController(fastify: FastifyInstance) {
     preHandler: [fastify.authenticate],
     handler: async (request, reply) => {
       const result = await leaveHousehold(
-        { householdId: request.params.householdId, userId: request.currentUser!.userId },
+        { householdId: request.params.householdId, userId: request.currentUser?.userId },
         fastify.dependencies,
       );
       return match(result)

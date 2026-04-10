@@ -8,7 +8,13 @@ const refreshParamsSchema = z.object({
 export type RefreshTokenParams = z.input<typeof refreshParamsSchema>;
 
 export type RefreshTokenResult =
-  | { type: 'success'; token: string; refreshToken: string }
+  | {
+      type: 'success';
+      token: string;
+      refreshToken: string;
+      tokenExpiresAt: string;
+      refreshTokenExpiresAt: string;
+    }
   | { type: 'invalid_token' }
   | { type: 'user_not_found' }
   | { type: 'error' };
@@ -26,7 +32,7 @@ export async function refreshToken(
     logger.warn({}, 'Invalid refresh token');
     return { type: 'invalid_token' };
   }
-  const userId = (payload as any).userId as string | undefined;
+  const userId = payload.userId;
 
   if (!userId) {
     logger.warn({}, 'Refresh token missing userId');
@@ -44,5 +50,14 @@ export async function refreshToken(
   const token = await jwtService.generateAccessToken({ userId: user.id, email: user.email });
   const refresh = await jwtService.generateRefreshToken({ userId: user.id, email: user.email });
 
-  return { type: 'success', token, refreshToken: refresh };
+  const tokenExpiresAt = jwtService.getTokenExpiresAt(token);
+  const refreshTokenExpiresAt = jwtService.getTokenExpiresAt(refresh);
+
+  return {
+    type: 'success',
+    token,
+    refreshToken: refresh,
+    tokenExpiresAt: tokenExpiresAt?.toISOString() ?? '',
+    refreshTokenExpiresAt: refreshTokenExpiresAt?.toISOString() ?? '',
+  };
 }

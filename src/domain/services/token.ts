@@ -11,6 +11,7 @@ export interface TokenService {
   verify(token: string): Promise<TokenPayload | null>;
   verifyAccess(token: string): Promise<TokenPayload | null>;
   verifyRefresh(token: string): Promise<TokenPayload | null>;
+  getTokenExpiresAt(token: string): Date | null;
 }
 
 //commeny
